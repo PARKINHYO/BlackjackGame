@@ -1,31 +1,18 @@
-
-#ifndef COMMON_H
-#define	COMMON_H
+#ifndef BLACKJACK_H
+#define BLACKJACK_H
 
 #include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
 #include <stdlib.h>
-#include <pthread.h>
+#include <string.h>
 #include <time.h>
-#include <signal.h>
 
-#define BUFFER_SIZE 32
-#define HIT "HIT"
-#define STAND "STAND"
-#define MAX_PLAYERS 10
+#define MAX_PLAYERS 5
 
-const char* suits[] = { "spades", "hearts", "diamonds", "clubs" };
-const char* values[] = { "dummy", "Ace", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Jack", "Queen", "King" };
-const char suit_codes[] = { 'S', 'H', 'D', 'C' };
-const char value_codes[] = { '0', 'A', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K' };
-typedef struct MSG {
-	long type;
-	char data[BUFFER_SIZE];
-}msg;
+const char* suits[] = {"spades", "hearts", "diamonds", "clubs"};
+const char* values[] = {"dummy", "Ace", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Jack", "Queen", "King"};
+const char suit_codes[] = {'S', 'H', 'D', 'C'};
+const char value_codes[] = {'0', 'A', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K'};
+
 void error(const char *msg)
 {
 	fprintf(stderr, "%s\n", msg);
@@ -35,7 +22,7 @@ void error(const char *msg)
 int get_suit_id(char suit)
 {
 	unsigned i;
-	for (i = 0; i < sizeof(suit_codes); ++i)
+	for (i = 0; i < sizeof (suit_codes); ++i)
 		if (suit == suit_codes[i])
 			return i;
 	return -1;
@@ -44,7 +31,7 @@ int get_suit_id(char suit)
 int get_value_id(char value)
 {
 	unsigned i;
-	for (i = 0; i < sizeof(value_codes); ++i)
+	for (i = 0; i < sizeof (value_codes); ++i)
 		if (value == value_codes[i])
 			return i;
 	return -1;
@@ -84,7 +71,4 @@ void display_state(int hand_values[], int hand_suits[], int ncards)
 		printf("; BUSTED");
 	printf("\n");
 }
-#endif	/* COMMON_H */
-
-
-
+#endif /* BLACKJACK_H */

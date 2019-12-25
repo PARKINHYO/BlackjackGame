@@ -1,4 +1,5 @@
-#include "common.h"
+#include "mqueueHeader.h"
+#include "blackJack.h"
 
 #define KEY_VALUE_MAIN (key_t)60300
 #define KEY_VALUE_MAIN2 (key_t)60301
@@ -19,7 +20,7 @@ int nplayers[MAX_PLAYERS], ndealers[MAX_PLAYERS];
 int msgid_Send_Main;
 int msgid_Recv_Main;
 
-int main()
+void mqServVersion()
 {
 	int id;
 	struct msqid_ds msq_status;
@@ -30,12 +31,13 @@ int main()
 	init_cards();
 	int i;
 
+	// 메세지큐 생성...
 	msgid_Send_Main = msgget(KEY_VALUE_MAIN2, IPC_CREAT | PERM);
 	msgid_Recv_Main = msgget(KEY_VALUE_MAIN, IPC_CREAT | PERM);
 
 	msgctl(msgid_Recv_Main, IPC_STAT, &msq_status);
 
-	/* Signal 등록 */
+	// signal 생성...
 	(void)signal(SIGINT, (void(*)()) set_shutdown);
 
 	for (i = 0; i < 10; i++) {
@@ -43,7 +45,7 @@ int main()
 		printf("start! : %s", buf.data); // start 정상적으로 받습니다.
 		if (strncmp(buf.data, "start", 5) == 0) {
 			printf("correct!\n");
-			pthread_create(&threads[count], NULL, play_game_one, (void*)count); // 게임 실행 스레드 생성합니다.
+			pthread_create(&threads[count], NULL, play_game_one, (void *)(intptr_t)count); // 게임 실행 스레드 생성합니다.
 			count +=1;
 		}
 	}
@@ -54,7 +56,7 @@ void* play_game_one(void *data)
 
 	struct msqid_ds msq_status;
 
-	int id = (int)data;
+	int id = (intptr_t)data;
 	char buffer[BUFFER_SIZE];
 	int nwritten;
 	int player_sum, dealer_sum;
@@ -99,6 +101,7 @@ void* play_game_one(void *data)
 	msgsnd(msgid_Send_Main, (void*)&buf, sizeof(msg), 0);
 	printf("send: first cardset\n");
 
+	//첫번째 카드를 뿌려주고 난뒤...
 	printf("\n");
 	printf("Player 1 Hand: ");
 	display_state(player_hand_values, player_hand_suits, nplayers[id]);
@@ -114,10 +117,10 @@ void* play_game_one(void *data)
 		printf("I received from player 1: %s\n", buffer);
 		strncpy(buf.data, "\0", BUFFER_SIZE);
 
-		/* HIT 결과 전송 */
-		/* HIT 여러번 받기 위한 추가 */
+		//hit 결과 전송...
 		if (strcmp(buffer, HIT) == 0)
 		{
+			//뮤텍스로 상호배제...
 			pthread_mutex_lock(&card_mutex);
 			{
 				player_hand_values[nplayers[id]] = card_values[ncard];
@@ -133,27 +136,24 @@ void* play_game_one(void *data)
 			pthread_mutex_unlock(&card_mutex);
 
 			strncpy(buf.data, buffer, BUFFER_SIZE);
-
-			//buf.type++;
 			msgsnd(msgid_Send_Main, (void*)&buf, sizeof(msg), 0);
 			printf("buf.data: %s\n", buf.data);
 			printf("I send to player 1: %s\n", buffer);
 
 			buffer[0] = '\0';
 
-			/* 플레이어 결과가 21이 넘을 경우*/
+			// 플레이어 결과가 21이 넘을 경우
 			if (calc_sum(player_hand_values, nplayers[id]) > 21)
 			{
 				printf("Player 1 busted. Dealer wins.\n");
 				return NULL;
 			}
-			/* 플레이어 결과가 21일 경우 이기기 때문에 break */
+			// 플레이어 결과가 21일 경우 이기기 때문에 break
 			else if (calc_sum(player_hand_values, nplayers[id]) == 21)
 				break;
 		}
-		/* 플레이어의 signal이 STAND인 경우 stop*/
+		// 플레이어의 signal이 STAND인 경우 stop
 		else if (strcmp(buffer, STAND) == 0) {
-			//msgsnd(msgid_Send_Main, (void*)&buf, sizeof(msg), 0);		
 			break;
 		}
 	}
@@ -177,7 +177,6 @@ void* play_game_one(void *data)
 	display_state(dealer_hand_values, dealer_hand_suits, ndealers[id]);
 
 	strncpy(buf.data, buffer, BUFFER_SIZE);
-	//buf.type++;
 	msgsnd(msgid_Send_Main, (void*)&buf, sizeof(msg), 0);
 
 	player_sum = calc_sum(player_hand_values, nplayers[id]);
@@ -206,7 +205,7 @@ void init_cards()
 	}
 
 	srand(time(NULL));
-	/* srand(1); */
+	// srand...
 	for (i = 0; i < 52; ++i)
 	{
 		int cv, cs;
@@ -224,7 +223,7 @@ void init_cards()
 	ncard = 0;
 }
 
-/*ctrl+C 로 종료시 공유자원 해제*/
+//메세지큐 해제...
 void *set_shutdown()
 {
 	printf("[SIGNAL] : Got shutdown signal\n");
@@ -234,5 +233,6 @@ void *set_shutdown()
 	printf("[SIGNAL] : Message passing queue marked for deletion\n");
 	exit(1);
 }
+
 
 

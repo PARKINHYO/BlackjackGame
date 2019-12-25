@@ -1,4 +1,5 @@
-#include "common.h"
+#include "mqueueHeader.h"
+#include "blackJack.h"
 
 #define KEY_VALUE_MAIN (key_t)60300
 #define KEY_VALUE_MAIN2 (key_t)60301
@@ -13,17 +14,8 @@ int msgid_Send_Main;
 int msgid_Recv_Main;
 
 pid_t pid;
-
-//char buffer[BUFFER_SIZE];
 int nwritten;
-//msg buf;
 pthread_t threads[MAX_PLAYERS];
-//msgrcv(msgid_Recv_Main, (void*)&buf, sizeof(msg), buf.type, 0);
-//strncpy(buffer, buf.data, BUFFER_SIZE);
-//printf("I received: %s\n", buffer);
-//my_hand_values[nmy] = get_value_id(buffer[0]);
-//my_hand_suits[nmy] = get_suit_id(buffer[1]);
-//++nmy;
 
 int my_sum;
 int dealer_sum;
@@ -32,7 +24,7 @@ int check = 0;
 int check2 = 0;
 int finalcheck = 0;
 
-/*ctrl+C 로 종료시 공유자원 해제*/
+// 메세지큐 해제...
 void *set_shutdown()
 {
 	printf("[SIGNAL] : Got shutdown signal\n");
@@ -68,7 +60,6 @@ void* send_msg() {
 				strncpy(buf.data, buffer, BUFFER_SIZE);
 				msgsnd(msgid_Send_Main, (void*)&buf, sizeof(msg), 0);
 				buffer[0]='\0';
-				//sleep(1);
 				check2 =2;
 
 			}
@@ -82,8 +73,6 @@ void* send_msg() {
 				check2 = 0;
 				check = 0;
 				finalcheck = 1;
-
-				//sleep(1);
 				break;
 			}
 			else
@@ -104,13 +93,11 @@ void* recv_msg() {
 	int my_hand_suits[20], dealer_hand_suits[20];
 	int nmy = 0, ndealer = 0;
 	buf.type = pid;
-	/* server side - send first cardset */
-	printf("게임 시작 대기중...\n");
 
 	while (1) {
 		if(check == 1){
-			printf("처음 시작부분....\n");
-			printf("%d\n\n", pid);
+
+			printf("pid: %d\n\n", pid);
 			msgrcv(msgid_Recv_Main, (void*)&buf, sizeof(msg), pid, 0);
 			strncpy(buffer, buf.data, BUFFER_SIZE);
 			printf("%s\n", buffer);
@@ -124,11 +111,10 @@ void* recv_msg() {
 			nmy = 2;
 			ndealer = 1;
 
-			//int choice;
 			my_sum = calc_sum(my_hand_values, nmy);
 
 			printf("\n");
-			/*카드덱과 합산값 화면출력*/
+			// 카드덱과 합산값 화면출력
 			printf("My Hand: ");
 			display_state(my_hand_values, my_hand_suits, nmy);
 			printf("Dealer Hand: ");
@@ -144,12 +130,7 @@ void* recv_msg() {
 			check2 = 1;
 			buffer[0]='\0';
 		}
-		sleep(3); 
 		if(check2 == 2){
-			//msgrcv(msgid_Recv_Main, (void*)&buf, sizeof(msg), pid, 0);
-			printf("HIT\n");
-			//pid++;
-			buffer[0]='\0';
 			printf("buffer: %s\n", buffer);
 			msgrcv(msgid_Recv_Main, (void*)&buf, sizeof(msg), pid, 0);
 			printf("buf.data: %s\n", buf.data);
@@ -159,8 +140,6 @@ void* recv_msg() {
 			my_hand_suits[nmy] = get_suit_id(buffer[1]);
 			++nmy;
 
-			//printf("\n");
-			/*카드덱과 합산값 화면출력*/
 			printf("\n");
 			printf("My Hand: ");
 			display_state(my_hand_values, my_hand_suits, nmy);
@@ -171,23 +150,15 @@ void* recv_msg() {
 				printf("\nI'm busted! I lose!\n");
 				return 0;
 			}
-			//check=0;
+
 			check2 = 1;
 		}
-		//sleep(1.5);
 
 		if(finalcheck == 1){
-			printf("STAND\n");
 			finalcheck = 0;
 			unsigned i;
-			//sleep(1);
-			//msgrcv(msgid_Recv_Main, (void*)&buf, sizeof(msg), pid, 0);
-			//pid++;
 			msgrcv(msgid_Recv_Main, (void*)&buf, sizeof(msg), pid, 0);
 			strncpy(buffer, buf.data, BUFFER_SIZE);
-
-			//check = 0;
-			//check2 = 0;
 
 			printf("I received: %s\n", buffer);
 
@@ -224,20 +195,19 @@ void* recv_msg() {
 }
 void* play_game() {
 
-	/*recv_msg, send_msg 스레드 생성*/
+	// recv_msg, send_msg 스레드 생성...
 	pthread_create(&threads[1], NULL, recv_msg, NULL);
 	pthread_create(&threads[2], NULL, send_msg, NULL);
 	int tid;
-	/*스레드들 끝날때까지 대기후 삭제*/
+	// 스레드들 끝날때까지 대기후 삭제...
 	for (tid = 1; tid < 2; ++tid)
 		pthread_join(threads[tid], NULL);
 
 }
 
-int main() {
+int mqClntVersion() {
 
 	char buffer[BUFFER_SIZE];
-	//msg buf;
 	int count = 0;
 	pid = getpid();
 	msg buf;
@@ -245,7 +215,7 @@ int main() {
 	msgid_Send_Main = msgget(KEY_VALUE_MAIN, IPC_CREAT | PERM);
 	msgid_Recv_Main = msgget(KEY_VALUE_MAIN2, IPC_CREAT | PERM);
 
-	/* Signal 등록 */
+	// Signal 등록 ...
 	(void)signal(SIGINT, (void(*)()) set_shutdown);
 
 	printf("input data ==> ");
@@ -256,16 +226,17 @@ int main() {
 	strncpy(buf.data, buffer, BUFFER_SIZE);
 	msgsnd(msgid_Send_Main, (void*)&buf, sizeof(msg), 0);
 
-	/* 쓴 데이터가 ‘quit’이면 while 문 벗어남 */
+	// 쓴 데이터가 ‘quit’이면 while 문 벗어남...
 	if (!strncmp(buf.data, "quit", 4)) {
 		return 0;
 	}
 
-	/*play_game 스레드 진입*/
+	// play_game 스레드 진입...
 	pthread_create(&threads[0], NULL, play_game, NULL);
-	/*스레드 종료 대기후 삭제*/
+	// 스레드 종료 대기후 삭제...
 	pthread_join(threads[0], NULL);
 	printf("game end!\n");
 	return 0;
 
 }
+
