@@ -1,5 +1,4 @@
-#include "mqueueHeader.h"
-#include "blackJack.h"
+#include "common.h"
 
 #define KEY_VALUE_MAIN (key_t)60300
 #define KEY_VALUE_MAIN2 (key_t)60301
@@ -20,7 +19,7 @@ int nplayers[MAX_PLAYERS], ndealers[MAX_PLAYERS];
 int msgid_Send_Main;
 int msgid_Recv_Main;
 
-void mqServVersion()
+int main()
 {
 	int id;
 	struct msqid_ds msq_status;

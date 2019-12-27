@@ -1,5 +1,7 @@
-#include "shmHeader.h"
-#include "blackJack.h"
+#include "common.h"
+
+
+
 
 int gnShmID1;      /* Shared Memory Indicator */
 int gnShmID2;      /* Shared Memory Indicator */
@@ -309,7 +311,7 @@ void* play_game(void * id)
 
 
 
-void shmClntVersion()
+int main()
 {
   /* Shared Memory */
   key_t        keyShm;       /* Shared Memory Key */

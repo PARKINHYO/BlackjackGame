@@ -1,5 +1,4 @@
 #include "pipeHeader.h"
-#include "blackJack.h"
 
 #define FROM_CLIENT_FILE "./from_client"
 #define TO_CLIENT_FILE "./to_client_"
@@ -46,7 +45,7 @@ union semun
 };
 
 /*main 스레드*/
-void fifoServVersion()
+int main(void)
 {
 	int id;
 	/*딜러스레드를 만들 스레드변수*/

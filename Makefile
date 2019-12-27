@@ -1,23 +1,22 @@
-main: src/main.o  src/fifo_client.o src/fifo_server.o src/mqueue_client.o src/mqueue_server.o src/shm_client.o src/shm_server.o
-	gcc src/fifo_client.o src/fifo_server.o src/mqueue_client.o src/mqueue_server.o src/shm_client.o src/shm_server.o src/main.o ./blackjack -02 -Wall -Wshadow -lpthread
-	rm -rf src/*.o src/*.gch
-main.o: src/main.c
-	gcc src/main.c -c
+PWD = $(shell pwd)
+FIFO_DIR = $(PWD)/fifo
+MQUEUE_DIR = $(PWD)/mqueue
+SHM_DIR = $(PWD)/shm
 
-fifo_client.o: src/fifo_client.c src/pipeHeader.h
-	gcc src/fifo_client.c src/pipeHeader.h -c -lpthread
+default: $(FIFO_DIR)/fifo $(MQUEUE_DIR)/mqueue $(SHM_DIR)/shm
 
-fifo_server.o: src/fifo_server.c src/pipeHeader.h
-	gcc src/fifo_srver.c src/pipeHeader.h -c -lpthread
+$(FIFO_DIR)/fifo:
+	cd $(FIFO_DIR); make
 
-mqueue_client.o: src/mqueue_client.c src/mqueueHeader.h
-	gcc src/mqueue_client.c src/mqueuHeader.h -c -lpthread
+$(MQUEUE_DIR)/mqueue:
+	cd $(MQUEUE_DIR); make
 
-mqueue_server.o: src/mqueu_server.c src/mqeueHeader.h
-	gcc src/mqueu_server.c src/mqueueHeader.h -c -lpthread
+$(SHM_DIR)/shm:
+	cd $(SHM_DIR); make
 
-shm_client.o: src/shm_client.c src/shmHeader.h
-	gcc src/shm_client.c src/shmHeader.h -c -lpthread
+clean:
+	cd $(FIFO_DIR); make clean
+	cd $(MQUEUE_DIR); make clean
+	cd $(SHM_DIR); make clean
+	rm -f *.csv
 
-shm_server.o: src/shm_server.c src/shmHeader.h
-	gcc src/shm_server.c src/shmHeader.h -c -lpthread
