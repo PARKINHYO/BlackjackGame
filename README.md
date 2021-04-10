@@ -138,7 +138,7 @@ void* recv_msg();
 
 👤 **이진재**
 
-* Mail: [loftmain]()
+* Mail: [leejinjae7@gmail.com](mailto:leejinjae7@gmail.com)
 * GitHub: [@loftmain](https://github.com/loftmain)
 
 ## 📝 License
